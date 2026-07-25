@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tally — Balances</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="sheet">
+    <nav class="main-nav">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="entry.html" class="nav-link">New Entry</a>
+      <a href="ledger.html" class="nav-link">Ledger</a>
+      <a href="balances.html" class="nav-link nav-link--active">Balances</a>
+    </nav>
+
+    <header class="letterhead">
+      <div class="stamp">TALLY</div>
+      <p class="subtitle">who paid, who owes, settled at a glance</p>
+    </header>
+
+    <section class="balances" aria-label="Net balances">
+      <h2 class="section-title">Balances</h2>
+      <div id="balances-list" class="stamp-grid">
+        <p class="empty-note">No entries yet — add one above to see balances.</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

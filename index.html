@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tally — Dashboard</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="sheet">
+    <nav class="main-nav">
+      <a href="index.html" class="nav-link nav-link--active">Home</a>
+      <a href="entry.html" class="nav-link">New Entry</a>
+      <a href="ledger.html" class="nav-link">Ledger</a>
+      <a href="balances.html" class="nav-link">Balances</a>
+    </nav>
+
+    <header class="letterhead">
+      <div class="stamp">TALLY</div>
+      <p class="subtitle">who paid, who owes, settled at a glance</p>
+    </header>
+
+    <div class="dashboard-cards">
+      <a href="entry.html" class="dashboard-card">
+        <div class="card-icon">➕</div>
+        <h3>Add Entry</h3>
+        <p>Record a new transaction</p>
+      </a>
+
+      <a href="ledger.html" class="dashboard-card">
+        <div class="card-icon">📋</div>
+        <h3>View Ledger</h3>
+        <p>See all transactions</p>
+      </a>
+
+      <a href="balances.html" class="dashboard-card">
+        <div class="card-icon">⚖️</div>
+        <h3>Check Balances</h3>
+        <p>View net balances</p>
+      </a>
+    </div>
+
+    <section class="balances" aria-label="Net balances">
+      <h2 class="section-title">Quick Balance Overview</h2>
+      <div id="balances-list" class="stamp-grid">
+        <p class="empty-note">No entries yet — add one above to see balances.</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

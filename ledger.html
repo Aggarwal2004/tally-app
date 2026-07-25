@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tally — Ledger</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="sheet">
+    <nav class="main-nav">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="entry.html" class="nav-link">New Entry</a>
+      <a href="ledger.html" class="nav-link nav-link--active">Ledger</a>
+      <a href="balances.html" class="nav-link">Balances</a>
+    </nav>
+
+    <header class="letterhead">
+      <div class="stamp">TALLY</div>
+      <p class="subtitle">who paid, who owes, settled at a glance</p>
+    </header>
+
+    <section class="ledger" aria-label="All entries">
+      <h2 class="section-title">Ledger</h2>
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th class="col-date">Date</th>
+            <th class="col-note">Note</th>
+            <th class="col-from">From</th>
+            <th class="col-to">To</th>
+            <th class="col-amount">Amount</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody id="ledger-body">
+          <tr class="empty-row"><td colspan="6">No entries yet.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tally — New Entry</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="sheet">
+    <nav class="main-nav">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="entry.html" class="nav-link nav-link--active">New Entry</a>
+      <a href="ledger.html" class="nav-link">Ledger</a>
+      <a href="balances.html" class="nav-link">Balances</a>
+    </nav>
+
+    <header class="letterhead">
+      <div class="stamp">TALLY</div>
+      <p class="subtitle">who paid, who owes, settled at a glance</p>
+    </header>
+
+    <section class="slip" aria-label="Add an entry">
+      <h2 class="slip__title">New entry</h2>
+      <form id="entry-form" class="slip__form">
+        <div class="field field--amount">
+          <label for="amount">Amount</label>
+          <div class="amount-wrap">
+            <span class="currency">$</span>
+            <input type="number" id="amount" name="amount" step="0.01" min="0.01" placeholder="0.00" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="creditor">Paid by <span class="hint">(creditor)</span></label>
+          <input type="text" id="creditor" name="creditor" placeholder="e.g. Asha" required />
+        </div>
+
+        <div class="field">
+          <label for="debitor">Owed by <span class="hint">(debitor)</span></label>
+          <input type="text" id="debitor" name="debitor" placeholder="e.g. Rohan" required />
+        </div>
+
+        <div class="field field--note">
+          <label for="note">Note <span class="hint">(optional)</span></label>
+          <input type="text" id="note" name="note" placeholder="dinner, rent, cab..." />
+        </div>
+
+        <button type="submit" class="btn-add">Add to ledger</button>
+        <p id="form-error" class="form-error" role="alert"></p>
+      </form>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "tally-ledger",
+  "version": "1.0.0",
+  "description": "A simple ledger app for tracking who paid and who owes",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "lowdb": "^7.0.1"
+  }
+}
