@@ -57,7 +57,7 @@ tally-app/
 
 ## Deployment Instructions
 
-### Option 1: Railway (Recommended - Free tier available)
+### Option 1: Render (Recommended - Free tier with persistent storage)
 
 1. **Create a GitHub repository** with your code
    ```bash
@@ -69,27 +69,6 @@ tally-app/
    git push -u origin main
    ```
 
-2. **Sign up for Railway** at [railway.app](https://railway.app)
-
-3. **Deploy from GitHub**
-   - Click "New Project" → "Deploy from GitHub repo"
-   - Select your repository
-   - Railway will auto-detect Node.js
-   - Click "Deploy"
-
-4. **Add persistent volume** (CRITICAL for data persistence)
-   - Go to your project → "Variables"
-   - Add a new variable: `DATABASE_PATH` = `/data/db.json`
-   - Go to your project → "Volumes"
-   - Add a volume named "data" mounted to `/data`
-   - This ensures your `db.json` persists across deployments
-
-5. **Your app will be live** at a Railway-provided URL
-
-### Option 2: Render
-
-1. **Create a GitHub repository** (same as above)
-
 2. **Sign up for Render** at [render.com](https://render.com)
 
 3. **Create a new Web Service**
@@ -99,12 +78,30 @@ tally-app/
    - Start command: `node server.js`
    - Instance type: Free (or paid for better performance)
 
-4. **Add persistent disk** (important for data persistence)
+4. **Add persistent disk** (CRITICAL for data persistence)
    - In your web service settings, go to "Disks"
    - Add a disk named "data" with mount path `/app`
    - Set `DATABASE_PATH` environment variable to `/app/db.json`
 
 5. **Your app will be live** at `https://your-app-name.onrender.com`
+
+### Option 2: Railway (Limited - No persistent storage on free tier)
+
+Railway's free tier doesn't include persistent storage, so your data will be lost on redeploy. For a production app with persistent data, use Render instead.
+
+If you still want to use Railway:
+
+1. **Create a GitHub repository** (same as above)
+
+2. **Sign up for Railway** at [railway.app](https://railway.app)
+
+3. **Deploy from GitHub**
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select your repository
+   - Railway will auto-detect Node.js
+   - Click "Deploy"
+
+**Warning:** Data will be ephemeral and lost on redeploy unless you upgrade to a paid plan with persistent storage.
 
 ### Option 3: VPS (DigitalOcean, Linode, etc.)
 

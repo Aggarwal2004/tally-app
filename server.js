@@ -16,6 +16,12 @@ const PUBLIC_DIR = __dirname;
 // Database setup
 const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'db.json');
 
+// Ensure database directory exists
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
 // ---------- database functions ----------
 
 function loadEntries() {
@@ -25,13 +31,19 @@ function loadEntries() {
     return data.entries || [];
   } catch (err) {
     if (err.code === 'ENOENT') return [];
-    throw err;
+    console.error('Error loading entries:', err);
+    return [];
   }
 }
 
 function saveEntries(entries) {
-  const data = { entries };
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+  try {
+    const data = { entries };
+    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('Error saving entries:', err);
+    throw err;
+  }
 }
 
 function saveEntry(entry) {
