@@ -18,18 +18,31 @@ let db, entriesCollection;
 
 async function connectDB() {
   try {
+    if (!process.env.MONGODB_URI) {
+      console.error('ERROR: MONGODB_URI environment variable not set');
+      console.error('Please set MONGODB_URI in your deployment environment');
+      return false;
+    }
+    
     await client.connect();
     db = client.db();
     entriesCollection = db.collection('entries');
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB successfully');
+    return true;
   } catch (err) {
     console.error('MongoDB connection error:', err);
+    console.error('Connection string:', mongoUri.replace(/:[^:@]+@/, ':****@'));
+    return false;
   }
 }
 
 // ---------- database functions ----------
 
 async function loadEntries() {
+  if (!entriesCollection) {
+    console.error('MongoDB not connected');
+    return [];
+  }
   try {
     const entries = await entriesCollection.find().sort({ createdAt: -1 }).toArray();
     return entries;
@@ -40,6 +53,10 @@ async function loadEntries() {
 }
 
 async function saveEntry(entry) {
+  if (!entriesCollection) {
+    console.error('MongoDB not connected');
+    throw new Error('Database not connected');
+  }
   try {
     await entriesCollection.insertOne(entry);
   } catch (err) {
@@ -49,6 +66,10 @@ async function saveEntry(entry) {
 }
 
 async function deleteEntry(id) {
+  if (!entriesCollection) {
+    console.error('MongoDB not connected');
+    throw new Error('Database not connected');
+  }
   try {
     const result = await entriesCollection.deleteOne({ id });
     return result.deletedCount > 0;
@@ -218,7 +239,11 @@ const server = http.createServer(async (req, res) => {
 
 // Start server with MongoDB connection
 async function startServer() {
-  await connectDB();
+  const connected = await connectDB();
+  if (!connected) {
+    console.error('Failed to connect to MongoDB. Server will not function properly.');
+    console.error('Please check MONGODB_URI environment variable.');
+  }
   server.listen(PORT, () => {
     console.log(`Tally is running at http://localhost:${PORT}`);
   });
