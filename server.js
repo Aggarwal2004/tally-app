@@ -1,43 +1,50 @@
 // Tally — a tiny ledger app
-// Node.js server with LowDB database
+// Node.js server with JSON database
 // Data is stored in JSON database
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { Low } = require('lowdb');
-const { JSONFile } = require('lowdb/node');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = __dirname;
 
+// Railway uses PORT environment variable automatically
+// Ensure we're listening on 0.0.0.0 for Railway
+
 // Database setup
 const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'db.json');
-const adapter = new JSONFile(dbPath);
-const defaultData = { entries: [] };
-const db = new Low(adapter, defaultData);
-
-// Initialize database
-db.read();
-db.data ||= defaultData;
 
 // ---------- database functions ----------
 
 function loadEntries() {
-  return db.data.entries || [];
+  try {
+    const raw = fs.readFileSync(dbPath, 'utf8');
+    const data = JSON.parse(raw);
+    return data.entries || [];
+  } catch (err) {
+    if (err.code === 'ENOENT') return [];
+    throw err;
+  }
 }
 
-async function saveEntry(entry) {
-  db.data.entries.push(entry);
-  await db.write();
+function saveEntries(entries) {
+  const data = { entries };
+  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
 }
 
-async function deleteEntry(id) {
-  const before = db.data.entries.length;
-  db.data.entries = db.data.entries.filter((e) => e.id !== id);
-  if (db.data.entries.length !== before) {
-    await db.write();
+function saveEntry(entry) {
+  const entries = loadEntries();
+  entries.push(entry);
+  saveEntries(entries);
+}
+
+function deleteEntry(id) {
+  const entries = loadEntries();
+  const filtered = entries.filter((e) => e.id !== id);
+  if (filtered.length !== entries.length) {
+    saveEntries(filtered);
   }
 }
 
@@ -172,10 +179,13 @@ async function handleApi(req, res, url) {
   // DELETE /api/entries/:id
   if (req.method === 'DELETE' && url.pathname.startsWith('/api/entries/')) {
     const id = url.pathname.split('/').pop();
-    const result = deleteEntry(id);
-    if (result.changes === 0) {
+    const entries = loadEntries();
+    const before = entries.length;
+    const filtered = entries.filter((e) => e.id !== id);
+    if (filtered.length === before) {
       return sendJSON(res, 404, { error: 'Entry not found' });
     }
+    saveEntries(filtered);
     return sendJSON(res, 200, { ok: true });
   }
 

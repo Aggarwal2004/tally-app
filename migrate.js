@@ -1,19 +1,9 @@
-// Migration script: Import data.json into LowDB database
+// Migration script: Import data.json into db.json
 const fs = require('fs');
 const path = require('path');
-const { Low } = require('lowdb');
-const { JSONFile } = require('lowdb/node');
 
 const dbPath = path.join(__dirname, 'db.json');
 const dataPath = path.join(__dirname, 'data.json');
-
-const adapter = new JSONFile(dbPath);
-const defaultData = { entries: [] };
-const db = new Low(adapter, defaultData);
-
-// Initialize database
-db.read();
-db.data ||= defaultData;
 
 // Load existing data
 try {
@@ -23,9 +13,9 @@ try {
   if (entries.length === 0) {
     console.log('No entries to migrate.');
   } else {
-    db.data.entries = entries;
-    db.write();
-    console.log(`Migrated ${entries.length} entries to LowDB database.`);
+    const data = { entries };
+    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+    console.log(`Migrated ${entries.length} entries to db.json.`);
   }
 } catch (err) {
   if (err.code === 'ENOENT') {
