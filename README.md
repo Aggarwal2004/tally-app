@@ -80,8 +80,8 @@ tally-app/
 
 4. **Add persistent disk** (CRITICAL for data persistence)
    - In your web service settings, go to "Disks"
-   - Add a disk named "data" with mount path `/app`
-   - Set `DATABASE_PATH` environment variable to `/app/db.json`
+   - Add a disk named "data" with mount path `/app/data`
+   - Set `DATABASE_PATH` environment variable to `/app/data/db.json`
 
 5. **Your app will be live** at `https://your-app-name.onrender.com`
 
