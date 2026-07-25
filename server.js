@@ -1,56 +1,60 @@
 // Tally — a tiny ledger app
-// Node.js server with JSON database
-// Data is stored in JSON database
+// Node.js server with MongoDB database
+// Data is stored in MongoDB Atlas (free tier)
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { MongoClient } = require('mongodb');
 
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = __dirname;
 
-// Railway uses PORT environment variable automatically
-// Ensure we're listening on 0.0.0.0 for Railway
+// MongoDB setup
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/tally';
+const client = new MongoClient(mongoUri);
+let db, entriesCollection;
 
-// Database setup
-const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'db.json');
+async function connectDB() {
+  try {
+    await client.connect();
+    db = client.db();
+    entriesCollection = db.collection('entries');
+    console.log('Connected to MongoDB');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+  }
+}
 
 // ---------- database functions ----------
 
-function loadEntries() {
+async function loadEntries() {
   try {
-    const raw = fs.readFileSync(dbPath, 'utf8');
-    const data = JSON.parse(raw);
-    return data.entries || [];
+    const entries = await entriesCollection.find().sort({ createdAt: -1 }).toArray();
+    return entries;
   } catch (err) {
-    if (err.code === 'ENOENT') return [];
     console.error('Error loading entries:', err);
     return [];
   }
 }
 
-function saveEntries(entries) {
+async function saveEntry(entry) {
   try {
-    const data = { entries };
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+    await entriesCollection.insertOne(entry);
   } catch (err) {
-    console.error('Error saving entries:', err);
+    console.error('Error saving entry:', err);
     throw err;
   }
 }
 
-function saveEntry(entry) {
-  const entries = loadEntries();
-  entries.push(entry);
-  saveEntries(entries);
-}
-
-function deleteEntry(id) {
-  const entries = loadEntries();
-  const filtered = entries.filter((e) => e.id !== id);
-  if (filtered.length !== entries.length) {
-    saveEntries(filtered);
+async function deleteEntry(id) {
+  try {
+    const result = await entriesCollection.deleteOne({ id });
+    return result.deletedCount > 0;
+  } catch (err) {
+    console.error('Error deleting entry:', err);
+    throw err;
   }
 }
 
@@ -135,14 +139,13 @@ function serveStatic(req, res, urlPath) {
 async function handleApi(req, res, url) {
   // GET /api/entries
   if (req.method === 'GET' && url.pathname === '/api/entries') {
-    const entries = loadEntries();
-    entries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const entries = await loadEntries();
     return sendJSON(res, 200, entries);
   }
 
   // GET /api/balances
   if (req.method === 'GET' && url.pathname === '/api/balances') {
-    const entries = loadEntries();
+    const entries = await loadEntries();
     return sendJSON(res, 200, computeBalances(entries));
   }
 
@@ -178,20 +181,17 @@ async function handleApi(req, res, url) {
       note,
       createdAt: new Date().toISOString(),
     };
-    saveEntry(entry);
+    await saveEntry(entry);
     return sendJSON(res, 201, entry);
   }
 
   // DELETE /api/entries/:id
   if (req.method === 'DELETE' && url.pathname.startsWith('/api/entries/')) {
     const id = url.pathname.split('/').pop();
-    const entries = loadEntries();
-    const before = entries.length;
-    const filtered = entries.filter((e) => e.id !== id);
-    if (filtered.length === before) {
+    const deleted = await deleteEntry(id);
+    if (!deleted) {
       return sendJSON(res, 404, { error: 'Entry not found' });
     }
-    saveEntries(filtered);
     return sendJSON(res, 200, { ok: true });
   }
 
@@ -216,6 +216,12 @@ const server = http.createServer(async (req, res) => {
   serveStatic(req, res, url.pathname);
 });
 
-server.listen(PORT, () => {
-  console.log(`Tally is running at http://localhost:${PORT}`);
-});
+// Start server with MongoDB connection
+async function startServer() {
+  await connectDB();
+  server.listen(PORT, () => {
+    console.log(`Tally is running at http://localhost:${PORT}`);
+  });
+}
+
+startServer().catch(console.error);

@@ -57,7 +57,30 @@ tally-app/
 
 ## Deployment Instructions
 
-### Option 1: Render (Recommended - Free tier with persistent storage)
+### Step 1: Set up MongoDB Atlas (Free Database)
+
+1. **Create MongoDB Atlas account** at [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
+   - Sign up for free (no credit card required)
+   - Create a new cluster (select free tier M0)
+   - Wait for cluster to be created (2-3 minutes)
+
+2. **Configure database access**
+   - Go to "Database Access" → "Add New Database User"
+   - Username: create a username
+   - Password: create a strong password
+   - Click "Create User"
+
+3. **Configure network access**
+   - Go to "Network Access" → "Add IP Address"
+   - Select "Allow Access from Anywhere" (0.0.0.0/0)
+   - Click "Confirm"
+
+4. **Get connection string**
+   - Go to "Database" → Click "Connect" → "Connect your application"
+   - Select Node.js version
+   - Copy the connection string (looks like: `mongodb+srv://username:password@cluster.mongodb.net/tally`)
+
+### Step 2: Deploy on Render (Free)
 
 1. **Create a GitHub repository** with your code
    ```bash
@@ -76,20 +99,18 @@ tally-app/
    - Connect your GitHub repository
    - Build command: `npm install`
    - Start command: `node server.js`
-   - Instance type: Free (or paid for better performance)
+   - Instance type: Free
 
-4. **Add persistent disk** (CRITICAL for data persistence)
-   - In your web service settings, go to "Disks"
-   - Add a disk named "data" with mount path `/app/data`
-   - Set `DATABASE_PATH` environment variable to `/app/data/db.json`
+4. **Add MongoDB connection string**
+   - In your web service settings → "Environment"
+   - Add variable: `MONGODB_URI` = your MongoDB Atlas connection string
+   - Replace `<password>` with your actual password
 
-5. **Your app will be live** at `https://your-app-name.onrender.com`
+5. **Deploy**
+   - Render will auto-deploy
+   - Your app will be live at `https://your-app-name.onrender.com`
 
-### Option 2: Railway (Limited - No persistent storage on free tier)
-
-Railway's free tier doesn't include persistent storage, so your data will be lost on redeploy. For a production app with persistent data, use Render instead.
-
-If you still want to use Railway:
+### Step 3: Deploy on Railway (Alternative)
 
 1. **Create a GitHub repository** (same as above)
 
@@ -101,7 +122,9 @@ If you still want to use Railway:
    - Railway will auto-detect Node.js
    - Click "Deploy"
 
-**Warning:** Data will be ephemeral and lost on redeploy unless you upgrade to a paid plan with persistent storage.
+4. **Add MongoDB connection string**
+   - Go to your project → "Variables"
+   - Add variable: `MONGODB_URI` = your MongoDB Atlas connection string
 
 ### Option 3: VPS (DigitalOcean, Linode, etc.)
 
@@ -127,10 +150,11 @@ If you still want to use Railway:
 ## Environment Variables
 
 - `PORT`: Server port (default: 3000)
-- `DATABASE_PATH`: Path to database file (default: ./db.json)
+- `MONGODB_URI`: MongoDB connection string (required for deployment)
 
 ## Important Notes
 
-- **Data persistence**: Make sure your deployment platform has persistent storage
-- **Backups**: Regularly backup your `db.json` file
+- **MongoDB Atlas**: Free tier provides 512MB storage - sufficient for this app
+- **Data persistence**: MongoDB Atlas ensures data persists across deployments
 - **Security**: This is a simple app without authentication - add auth if needed for production
+- **MongoDB connection**: Keep your connection string secure - never commit it to git
