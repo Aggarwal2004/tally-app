@@ -214,7 +214,7 @@ async function handleApi(req, res, url) {
     return sendJSON(res, 200, computeBalances(entries));
   }
 
-  // POST /api/entries  { amount, creditor, debitor, note }
+  // POST /api/entries  { amount, creditor, debitor, date?, note? }
   if (req.method === 'POST' && url.pathname === '/api/entries') {
     let body;
     try {
@@ -226,6 +226,7 @@ async function handleApi(req, res, url) {
     const amount = Number(body.amount);
     const creditor = String(body.creditor || '').trim();
     const debitor = String(body.debitor || '').trim();
+    const date = String(body.date || '').trim();
     const note = String(body.note || '').trim();
 
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -238,13 +239,16 @@ async function handleApi(req, res, url) {
       return sendJSON(res, 400, { error: 'Creditor and debitor must be different people' });
     }
 
+    // Use custom date if provided, otherwise use current date
+    const createdAt = date ? new Date(date).toISOString() : new Date().toISOString();
+
     const entry = {
       id: crypto.randomUUID(),
       amount: Math.round(amount * 100) / 100,
       creditor,
       debitor,
       note,
-      createdAt: new Date().toISOString(),
+      createdAt,
     };
     await saveEntry(entry);
     return sendJSON(res, 201, entry);

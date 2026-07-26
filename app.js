@@ -126,6 +126,7 @@ if (form) {
       amount: form.amount.value,
       creditor: form.creditor.value,
       debitor: form.debitor.value,
+      date: form.date.value,
       note: form.note.value,
     };
 
