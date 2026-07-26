@@ -2,6 +2,10 @@ const form = document.getElementById('entry-form');
 const errorEl = document.getElementById('form-error');
 const ledgerBody = document.getElementById('ledger-body');
 const balancesList = document.getElementById('balances-list');
+const inventoryForm = document.getElementById('inventory-form');
+const inventoryError = document.getElementById('inventory-error');
+const inventoryBody = document.getElementById('inventory-body');
+const inventoryEmpty = document.getElementById('inventory-empty');
 
 const money = (n) =>
   n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -17,13 +21,15 @@ async function fetchJSON(url, options) {
 }
 
 async function loadAll() {
-  const [entries, balances] = await Promise.all([
+  const [entries, balances, inventory] = await Promise.all([
     fetchJSON('/api/entries'),
     fetchJSON('/api/balances'),
+    fetchJSON('/api/inventory'),
   ]);
-  
+
   if (ledgerBody) renderLedger(entries);
   if (balancesList) renderBalances(balances);
+  if (inventoryBody) renderInventory(inventory);
 }
 
 function renderLedger(entries) {
@@ -70,6 +76,41 @@ function renderBalances(balances) {
     .join('');
 }
 
+function renderInventory(inventory) {
+  if (!inventory.length) {
+    inventoryBody.innerHTML = '';
+    inventoryEmpty.classList.add('show');
+    return;
+  }
+  inventoryEmpty.classList.remove('show');
+  inventoryBody.innerHTML = inventory
+    .map((item) => {
+      const actionColors = {
+        'given': 'var(--danger)',
+        'received': 'var(--success)',
+        'removed': 'var(--warning)'
+      };
+      const actionLabels = {
+        'given': 'Given to',
+        'received': 'Received from',
+        'removed': 'Removed from'
+      };
+      const color = actionColors[item.action] || 'var(--text)';
+      return `
+      <tr data-id="${item.id}">
+        <td>${dateFmt(item.createdAt)}</td>
+        <td><strong>${escapeHtml(item.item)}</strong></td>
+        <td>${item.quantity}</td>
+        <td>${escapeHtml(item.godown)}</td>
+        <td>${escapeHtml(item.person)}</td>
+        <td><span style="color: ${color}; font-weight: 500;">${actionLabels[item.action]}</span></td>
+        <td>${item.note ? escapeHtml(item.note) : '—'}</td>
+        <td><button class="delete-btn" title="Delete transaction" data-id="${item.id}">✕</button></td>
+      </tr>`;
+    })
+    .join('');
+}
+
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
@@ -109,6 +150,50 @@ if (ledgerBody) {
     const id = btn.dataset.id;
     try {
       await fetchJSON(`/api/entries/${id}`, { method: 'DELETE' });
+      await loadAll();
+    } catch (err) {
+      console.error(err);
+    }
+  });
+}
+
+if (inventoryForm) {
+  inventoryForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    inventoryError.textContent = '';
+    inventoryError.classList.remove('show');
+
+    const payload = {
+      item: inventoryForm.item.value,
+      quantity: Number(inventoryForm.quantity.value),
+      godown: inventoryForm.godown.value,
+      person: inventoryForm.person.value,
+      action: inventoryForm.action.value,
+      note: inventoryForm.note.value,
+    };
+
+    try {
+      await fetchJSON('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      inventoryForm.reset();
+      await loadAll();
+    } catch (err) {
+      inventoryError.textContent = err.message;
+      inventoryError.classList.add('show');
+    }
+  });
+}
+
+if (inventoryBody) {
+  inventoryBody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.delete-btn');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    try {
+      await fetchJSON(`/api/inventory/${id}`, { method: 'DELETE' });
       await loadAll();
     } catch (err) {
       console.error(err);

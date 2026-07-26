@@ -14,7 +14,7 @@ const PUBLIC_DIR = __dirname;
 // MongoDB setup
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/tally';
 const client = new MongoClient(mongoUri);
-let db, entriesCollection;
+let db, entriesCollection, inventoryCollection;
 
 async function connectDB() {
   try {
@@ -27,6 +27,7 @@ async function connectDB() {
     await client.connect();
     db = client.db();
     entriesCollection = db.collection('entries');
+    inventoryCollection = db.collection('inventory');
     console.log('Connected to MongoDB successfully');
     return true;
   } catch (err) {
@@ -75,6 +76,49 @@ async function deleteEntry(id) {
     return result.deletedCount > 0;
   } catch (err) {
     console.error('Error deleting entry:', err);
+    throw err;
+  }
+}
+
+// ---------- inventory database functions ----------
+
+async function loadInventory() {
+  if (!inventoryCollection) {
+    console.error('MongoDB not connected');
+    return [];
+  }
+  try {
+    const inventory = await inventoryCollection.find().sort({ createdAt: -1 }).toArray();
+    return inventory;
+  } catch (err) {
+    console.error('Error loading inventory:', err);
+    return [];
+  }
+}
+
+async function saveInventoryItem(item) {
+  if (!inventoryCollection) {
+    console.error('MongoDB not connected');
+    throw new Error('Database not connected');
+  }
+  try {
+    await inventoryCollection.insertOne(item);
+  } catch (err) {
+    console.error('Error saving inventory item:', err);
+    throw err;
+  }
+}
+
+async function deleteInventoryItem(id) {
+  if (!inventoryCollection) {
+    console.error('MongoDB not connected');
+    throw new Error('Database not connected');
+  }
+  try {
+    const result = await inventoryCollection.deleteOne({ id });
+    return result.deletedCount > 0;
+  } catch (err) {
+    console.error('Error deleting inventory item:', err);
     throw err;
   }
 }
@@ -212,6 +256,62 @@ async function handleApi(req, res, url) {
     const deleted = await deleteEntry(id);
     if (!deleted) {
       return sendJSON(res, 404, { error: 'Entry not found' });
+    }
+    return sendJSON(res, 200, { ok: true });
+  }
+
+  // GET /api/inventory
+  if (req.method === 'GET' && url.pathname === '/api/inventory') {
+    const inventory = await loadInventory();
+    return sendJSON(res, 200, inventory);
+  }
+
+  // POST /api/inventory  { item, quantity, godown, person, action, note? }
+  if (req.method === 'POST' && url.pathname === '/api/inventory') {
+    let body;
+    try {
+      body = await readBody(req);
+    } catch {
+      return sendJSON(res, 400, { error: 'Invalid JSON body' });
+    }
+
+    const item = String(body.item || '').trim();
+    const quantity = Number(body.quantity);
+    const godown = String(body.godown || '').trim();
+    const person = String(body.person || '').trim();
+    const action = String(body.action || '').trim();
+    const note = String(body.note || '').trim();
+
+    if (!item || !quantity || !godown || !person || !action) {
+      return sendJSON(res, 400, { error: 'Item, quantity, godown, person, and action are required' });
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      return sendJSON(res, 400, { error: 'Quantity must be a positive number' });
+    }
+    if (!['given', 'received', 'removed'].includes(action)) {
+      return sendJSON(res, 400, { error: 'Action must be given, received, or removed' });
+    }
+
+    const inventoryItem = {
+      id: crypto.randomUUID(),
+      item,
+      quantity,
+      godown,
+      person,
+      action,
+      note,
+      createdAt: new Date().toISOString(),
+    };
+    await saveInventoryItem(inventoryItem);
+    return sendJSON(res, 201, inventoryItem);
+  }
+
+  // DELETE /api/inventory/:id
+  if (req.method === 'DELETE' && url.pathname.startsWith('/api/inventory/')) {
+    const id = url.pathname.split('/').pop();
+    const deleted = await deleteInventoryItem(id);
+    if (!deleted) {
+      return sendJSON(res, 404, { error: 'Inventory item not found' });
     }
     return sendJSON(res, 200, { ok: true });
   }
